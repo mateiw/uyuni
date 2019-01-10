@@ -31,11 +31,53 @@ try:
 except ImportError:
     #  python3
     import urllib.parse as urlparse # pylint: disable=F0401,E0611
+try:
+    # python 2
+    from urllib import url2pathname
+except ImportError:
+    # python 3
+    from urllib.request import url2pathname
 
 RETRIES = 10
 RETRY_DELAY = 1
 FORMAT_PRIORITY = ['.xz', '.gz', '']
 
+class FileAdapter(requests.adapters.BaseAdapter):
+
+    @staticmethod
+    def _check_file(method, path):
+        """Return an HTTP status for the given filesystem path."""
+        if method.lower() not in ('get', 'head'):
+            return 405, "Method Not Allowed"
+        elif os.path.isdir(path):
+            return 400, "Path Not A File"
+        elif not os.path.isfile(path):
+            return 404, "File Not Found"
+        elif not os.access(path, os.R_OK):
+            return 403, "Access Denied"
+        else:
+            return 200, "OK"
+
+    def send(self, req, **kwargs):
+        path = os.path.normpath(url2pathname(req.path_url))
+        response = requests.Response()
+        response.status_code, response.reason = self._check_file(req.method, path)
+        if response.status_code == 200 and req.method.lower() != 'head':
+            try:
+                response.raw = open(path, 'rb')
+            except (OSError, IOError) as err:
+                response.status_code = 500
+                response.reason = str(err)
+
+        response.url = req.url
+
+        response.request = req
+        response.connection = self
+
+        return response
+
+    def close(self):
+        pass
 
 class DebPackage(object):
     def __init__(self):
@@ -97,7 +139,9 @@ class DebRepo(object):
                             'http' : 'http://'+self.proxy_username+":"+self.proxy_password+"@"+self.proxy,
                             'https' : 'http://'+self.proxy_username+":"+self.proxy_password+"@"+self.proxy,
                         }
-                data = requests.get(url, proxies=proxies, cert=(self.sslclientcert, self.sslclientkey), verify=self.sslcacert)
+                with requests.Session() as reqsession:
+                     reqsession.mount('file://', FileAdapter())
+                     data = reqsession.get(url, proxies=proxies, cert=(self.sslclientcert, self.sslclientkey), verify=self.sslcacert)
                 if not data.ok:
                     return ''
                 filename = self.basecachedir + '/' + os.path.basename(url)
@@ -109,8 +153,9 @@ class DebRepo(object):
                     if fd is not None:
                         fd.close()
                 return filename
-            except requests.exceptions.RequestException:
+            except requests.exceptions.RequestException as e:
                 print("ERROR: requests.exceptions.RequestException occured")
+                print(e)
                 time.sleep(RETRY_DELAY)
 
         return ''
