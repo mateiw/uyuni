@@ -26,6 +26,7 @@ import com.suse.manager.kubernetes.KubernetesManager;
 import com.suse.manager.virtualization.VirtManager;
 import com.suse.manager.webui.controllers.ActivationKeysController;
 import com.suse.manager.webui.controllers.CVEAuditController;
+import com.suse.manager.webui.controllers.ClustersController;
 import com.suse.manager.webui.controllers.DownloadController;
 import com.suse.manager.webui.controllers.FormulaCatalogController;
 import com.suse.manager.webui.controllers.FormulaController;
@@ -171,6 +172,10 @@ public class Router implements SparkApplication {
 
         // Single Sign-On (SSO) via SAML
         SSOController.initRoutes();
+
+        // Clusters
+        ClustersController.initRoutes(jade);
+
     }
 
     private void  initNotFoundRoutes(JadeTemplateEngine jade) {

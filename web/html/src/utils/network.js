@@ -1,16 +1,23 @@
+// @flow
 /* eslint-disable */
 "use strict";
 
-const Functions = require("../utils/functions.js");
-const MessagesUtils = require("../components/messages.js").Utils;
+import Functions from '../utils/functions';
+import {Messages, Utils as MessagesUtils} from '../components/messages';
+
+import type {Cancelable} from "../utils/functions";
+
+declare var csrfToken: string;
 
 export type JsonResult<T> = {
   success: boolean,
-  messages: List<String>,
+  messages: Array<String>,
   data: T
 }
 
-function request(url, type, headers, data, contentType, processData = true) {
+
+
+function request(url: string, type, headers, data, contentType: string, processData: boolean = true) : Cancelable {
    const a = $.ajax({
          url: url,
          data: data,
@@ -28,23 +35,23 @@ function request(url, type, headers, data, contentType, processData = true) {
    return Functions.Utils.cancelable(Promise.resolve(a), () => a.abort());
 }
 
-function post(url, data, contentType, processData = true) {
+function post(url: string, data, contentType: string, processData: boolean = true): Cancelable {
     return request(url, "POST", { "X-CSRF-Token": csrfToken }, data, contentType, processData);
 }
 
-function del(url, data, contentType, processData = true) {
+function del(url: string, data, contentType: string, processData: boolean = true): Cancelable {
     return request(url, "DELETE", { "X-CSRF-Token": csrfToken }, data, contentType, processData);
 }
 
-function put(url, data, contentType, processData = true) {
+function put(url: string, data, contentType: string, processData: boolean = true): Cancelable {
     return request(url, "PUT", { "X-CSRF-Token": csrfToken }, data, contentType, processData);
 }
 
-function get(url, contentType) {
+function get(url: string, contentType: string = "application/json"): Cancelable {
     return request(url, "GET", {}, {}, contentType);
 }
 
-function errorMessageByStatus(status) {
+function errorMessageByStatus(status: number) {
     if (status === 401) {
         return [t("Session expired, please reload the page.")];
     } else if (status === 403) {
@@ -87,11 +94,13 @@ function responseErrorMessage(jqXHR, messageMapFunc = null) {
    }
 }
 
-module.exports = {
-    get: get,
-    post: post,
-    put: put,
-    del: del,
-    errorMessageByStatus: errorMessageByStatus,
-    responseErrorMessage: responseErrorMessage
+const Network = {
+    get : get,
+    post : post,
+    put : put,
+    del : del,
+    errorMessageByStatus : errorMessageByStatus, 
+    responseErrorMessage : responseErrorMessage
 }
+
+export default Network;

@@ -169,6 +169,10 @@ public class MenuTree {
                     .withDir("/rhn/manager/vhms")
                     .withVisibility(adminRoles.get("org"))));
 
+            // Clusters
+            nodes.add(new MenuItem("clusters.nav.title").withIcon("spacewalk-icon-salt")
+                    .addChild(new MenuItem("Overview").withPrimaryUrl("/rhn/manager/clusters")));
+
             // Salt
             nodes.add(new MenuItem("Salt").withIcon("spacewalk-icon-salt")
                 .addChild(new MenuItem("Keys").withPrimaryUrl("/rhn/manager/systems/keys"))
