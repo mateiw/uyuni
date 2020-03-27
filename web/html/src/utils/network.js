@@ -94,13 +94,11 @@ function responseErrorMessage(jqXHR, messageMapFunc = null) {
    }
 }
 
-const Network = {
-    get : get,
-    post : post,
-    put : put,
-    del : del,
-    errorMessageByStatus : errorMessageByStatus, 
-    responseErrorMessage : responseErrorMessage
-}
-
-export default Network;
+export {
+    get,
+    post,
+    put,
+    del,
+    errorMessageByStatus,
+    responseErrorMessage
+};
