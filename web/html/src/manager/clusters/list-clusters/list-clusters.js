@@ -2,8 +2,7 @@
 import { hot } from 'react-hot-loader';
 import React, {useEffect} from 'react';
 import withPageWrapper from 'components/general/with-page-wrapper';
-import useClustersApi from '../shared/api/use-clusters-api';
-import {TopPanel} from "../../../components/panels/TopPanel";
+import {TopPanel} from 'components/panels/TopPanel';
 import {LinkButton} from 'components/buttons';
 import useRoles from "core/auth/use-roles";
 import {isOrgAdmin} from "core/auth/auth.utils";
@@ -11,6 +10,7 @@ import {Table} from 'components/table/Table';
 import {Column} from 'components/table/Column';
 import {SearchField} from 'components/table/SearchField';
 import Functions from 'utils/functions';
+import {SystemLink} from 'components/links';
 
 import type {ClusterType} from '../shared/api/use-clusters-api';
 
@@ -20,8 +20,6 @@ type Props = {
 };
 
 const ListClusters = (props) => {
-    const { fetchClusters } = useClustersApi();
-
     const roles = useRoles();
     const hasEditingPermissions = isOrgAdmin(roles);
     const panelButtons = (
@@ -29,7 +27,7 @@ const ListClusters = (props) => {
         {
             hasEditingPermissions &&
             <LinkButton
-                id="addcluster"
+                id="importCluster"
                 icon="fa-plus"
                 className="btn-link js-spa"
                 title={t('Import an existing cluster')}
@@ -50,11 +48,11 @@ const ListClusters = (props) => {
 
     return (
         <TopPanel title={t('Clusters')}
-            icon="spacewalk-icon-lifecycle" button={panelButtons}
+            icon="spacewalk-icon-cluster" button={panelButtons}
             helpUrl="/docs/reference/clusters/clusters-menu.html">
             <Table
                 data={props.clusters}
-                identifier={row => row.label}
+                identifier={row => row.id}
                 initialSortColumnKey="name"
                 searchField={(
                     <SearchField
@@ -70,7 +68,7 @@ const ListClusters = (props) => {
                     cell={row =>
                     <a
                         className="js-spa"
-                        href={`/rhn/manager/clusters/${row.id}`}>
+                        href={`/rhn/manager/cluster/${row.id}`}>
                         {row.name}
                     </a>
                     }
@@ -79,8 +77,14 @@ const ListClusters = (props) => {
                     columnKey="type"
                     comparator={Functions.Utils.sortByText}
                     header={t('Type')}
-                    cell={row => row.type}
+                    cell={row => row.type.name}
                 />
+                <Column
+                    columnKey="type"
+                    comparator={Functions.Utils.sortByText}
+                    header={t('Management node')}
+                    cell={row => <SystemLink id={row.managementNode.id}>{row.managementNode.name}</SystemLink> }
+                />                
             </Table>
         </TopPanel>);
 

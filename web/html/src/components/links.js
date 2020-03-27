@@ -1,7 +1,7 @@
 /* eslint-disable */
 // @flow
 "use strict";
-const React = require("react");
+import * as React from 'react';
 
 type ChannelAnchorLinkProps = {
   id: string|number,
@@ -42,11 +42,12 @@ const ActionLink = (props: ActionLinkProps) =>
 type SystemLinkProps = {
   id: string|number,
   newWindow?: boolean,
-  children?: React.Node
+  children?: React.Node,
+  className?: string 
 }
 
 const SystemLink = (props: SystemLinkProps) =>
-  <a href={"/rhn/systems/details/Overview.do?sid=" + props.id} target={props.newWindow ? "_blank" : "_self"}>
+  <a href={"/rhn/systems/details/Overview.do?sid=" + props.id} target={props.newWindow ? "_blank" : "_self"} className={props.className}>
   { props.children }
   </a>;
 
@@ -61,10 +62,10 @@ const ActionChainLink = (props: ActionChainLinkProps) =>
   { props.children }
   </a>;
 
-module.exports = {
-  ChannelAnchorLink: ChannelAnchorLink,
-  ChannelLink: ChannelLink,
-  ActionLink: ActionLink,
-  SystemLink: SystemLink,
-  ActionChainLink: ActionChainLink
+export {
+  ChannelAnchorLink,
+  ChannelLink,
+  ActionLink,
+  SystemLink,
+  ActionChainLink
 }

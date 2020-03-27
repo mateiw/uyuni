@@ -1,4 +1,5 @@
-const React = require('react');
+// @flow
+import * as React from 'react';
 
 type Props = {
   headingLevel: string,
@@ -8,12 +9,12 @@ type Props = {
   className?: string,
   icon?: string,
   header?: string,
-  footer?: string,
+  footer?: React.Node,
   children: React.Node,
   buttons?: React.Node,
 };
 
-function Panel(props: Props) {
+const Panel = (props: Props) => {
   const { headingLevel: HeadingLevel } = props;
 
   const titleContent = props.title && <React.Fragment>
@@ -97,6 +98,6 @@ Panel.defaultProps = {
   buttons: undefined,
 };
 
-module.exports = {
-  Panel,
+export {
+  Panel
 };

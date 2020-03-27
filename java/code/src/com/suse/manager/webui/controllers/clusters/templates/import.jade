@@ -1,0 +1,23 @@
+include /templates/common.jade
+
++userRoles
+
++userPreferences
+
+#import
+
+script(type='text/javascript').
+    window.csrfToken = "#{csrf_token}";
+
+div#init_data_import(style="display: none")
+    | #{contentImport}
+
+script(type='text/javascript').
+    spaImportReactPage('clusters/import')
+        .then(function(module) { module.renderer(
+            'import',
+                {
+                    contentImport: document.getElementById('init_data_import').textContent,
+                    flashMessage: "#{flashMessage}"
+                }
+            ); });
