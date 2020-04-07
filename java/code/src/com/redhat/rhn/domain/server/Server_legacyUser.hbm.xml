@@ -359,6 +359,10 @@ PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
                                          AND n.name = 'zypper')
         ]]>
     </query>
+
+    <query name="Server.findByEntitlement">
+        <![CDATA[select s from Server s join s.groups as g join g.groupType as gt where gt.label=:label]]>
+    </query>
     
     <sql-query name="Server.findUnscheduledErrataByServerIds">
         <return-scalar column="serverId" type="long"/>

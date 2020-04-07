@@ -1356,4 +1356,12 @@ public class ServerFactory extends HibernateFactory {
         return singleton.listObjectsByNamedQuery(
                 "Server.listOrgSystems", params);
     }
+
+    public static List<Server> findByEntitlement(Entitlement entitlement) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("label", entitlement.getLabel());
+        return singleton.listObjectsByNamedQuery(
+                "Server.findByEntitlement", params);
+    }
+
 }

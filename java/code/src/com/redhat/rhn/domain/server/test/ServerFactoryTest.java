@@ -1420,4 +1420,17 @@ public class ServerFactoryTest extends BaseTestCaseWithUser {
         assertEquals(server.getId(), servers.stream().findFirst().get());
 
     }
+
+    public void testFindByEntitlement() throws Exception {
+        Server server1 = ServerFactoryTest.createTestServer(user, true);
+        systemEntitlementManager.addEntitlementToServer(server1, EntitlementManager.CONTAINER_BUILD_HOST);
+        Server server2 = ServerFactoryTest.createTestServer(user, true);
+
+        HibernateFactory.getSession().flush();
+        HibernateFactory.getSession().clear();
+
+        List<Server> servers = ServerFactory.findByEntitlement(EntitlementManager.CONTAINER_BUILD_HOST);
+        assertEquals(1, servers.size());
+
+    }
 }

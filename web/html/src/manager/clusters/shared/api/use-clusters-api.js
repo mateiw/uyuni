@@ -6,10 +6,12 @@ import type {JsonResult} from "utils/network";
 
 export type ClusterTypeType = {
     id: number,
-    name: string
+    label: string,
+    name: string,
+    description: string
 }
 
-export type Server = {
+export type ServerType = {
     id: number, 
     name: string
 }
@@ -18,7 +20,7 @@ export type ClusterType = {
     id: number,
     name: string,
     type: ClusterTypeType,
-    managementNode: Server
+    managementNode: ServerType
 }
 
 export type ClusterNodeType = {
@@ -36,9 +38,8 @@ type ClusterNodesResultType = {
 }
 
 const useClustersApi = ()  => {
-    // const [clusters, setClusters] = useState<Array<ClusterType>>([]);
     const [clusterId, setClusterId] = useState<number>(0);
-    // const [clustersMessages, setClustersMessages] = useState<{[string]: string}>({});
+
     const [nodes, setNodes] = useState<Array<ClusterNodeType>>([]);
     const [messages, setMessages] = useState<Array<Object>>([]);
     const [fetching, setFetching] = useState<boolean>(false);
@@ -77,14 +78,45 @@ const useClustersApi = ()  => {
             });
     }
 
+    const fetchManagementNodes = (provider: string) : Promise<Array<ServerType>> => {
+        setFetching(true);
+        return Network.get(`/rhn/manager/api/cluster/provider/${provider}/nodes`).promise
+            .then((data: JsonResult<Array<ServerType>>) => {
+                return data.data;
+            })
+            .catch(handleResponseError)
+            .finally(() => {
+                setFetching(false);
+            });
+    }    
+
+    const fetchFormulaData = (provider: string) : Promise<any> => {
+        setFetching(true);
+        return Network.get(`/rhn/manager/api/cluster/import/${provider}/formula`).promise
+            .then((data: JsonResult<any>) => {
+                return Promise.resolve({
+                    "formula_name": provider,
+                    "formula_list": [],
+                    "metadata": {},
+                    ...data.data
+                    });
+            })
+            .catch(handleResponseError)
+            .finally(() => {
+                setFetching(false);
+            });            
+    }
+
+
     return {
         // fetchClustersList,
         nodes,
         messages,
         fetchClusterNodes,
+        fetchFormulaData,
+        fetchManagementNodes,
         fetching
     }
-
 }
 
 export default useClustersApi;

@@ -34,7 +34,9 @@ import javax.persistence.Table;
 public class ClusterType {
 
     private long id;
+    private String label;
     private String name;
+    private String description;
 
     /**
      * @return id to get
@@ -56,6 +58,21 @@ public class ClusterType {
     }
 
     /**
+     * @return label to get
+     */
+    @Column(name = "label")
+    public String getLabel() {
+        return label;
+    }
+
+    /**
+     * @param labelIn to set
+     */
+    public void setLabel(String labelIn) {
+        this.label = labelIn;
+    }
+
+    /**
      * @return name to get
      */
     @Column(name = "name")
@@ -68,5 +85,20 @@ public class ClusterType {
      */
     public void setName(String nameIn) {
         this.name = nameIn;
+    }
+
+    /**
+     * @return description to get
+     */
+    @Column(name = "description")
+    public String getDescription() {
+        return description;
+    }
+
+    /**
+     * @param descriptionIn to set
+     */
+    public void setDescription(String descriptionIn) {
+        this.description = descriptionIn;
     }
 }

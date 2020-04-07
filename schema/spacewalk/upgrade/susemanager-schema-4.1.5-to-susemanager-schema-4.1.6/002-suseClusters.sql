@@ -12,17 +12,19 @@
 -- in this software or its documentation.
 --
 
-DROP TABLE IF EXISTS suseClusters;
-DROP SEQUENCE IF EXISTS suse_cluster_id_seq;
-
-DROP TABLE IF EXISTS suseClusterTypes;
-DROP SEQUENCE IF EXISTS suse_clustertypes_id_seq;
+--DROP TABLE IF EXISTS suseClusters;
+--DROP SEQUENCE IF EXISTS suse_cluster_id_seq;
+--
+--DROP TABLE IF EXISTS suseClusterTypes;
+--DROP SEQUENCE IF EXISTS suse_clustertypes_id_seq;
 
 
 CREATE TABLE IF NOT EXISTS suseClusterTypes (
     id          NUMERIC NOT NULL
                     CONSTRAINT suse_clustertypes_id_pk PRIMARY KEY,
-    name        VARCHAR(256) NOT NULL
+    label       VARCHAR(100) NOT NULL,
+    name        VARCHAR(256) NOT NULL,
+    description VARCHAR(256) NOT NULL
 );
 
 CREATE SEQUENCE IF NOT EXISTS suse_clustertypes_id_seq;
@@ -52,11 +54,3 @@ CREATE SEQUENCE IF NOT EXISTS suse_cluster_id_seq;
 CREATE UNIQUE INDEX IF NOT EXISTS suse_cluster_idx
     ON suseClusters (name);
 
---CREATE TABLE IF NOT EXISTS suseClusterNodes (
---    id          NUMERIC NOT NULL
---                    CONSTRAINT suse_clusternodes_id_pk PRIMARY KEY,
---    server_id     NUMERIC
---                    CONSTRAINT suse_clusternodes_ser_fk
---                        REFERENCES rhnServer (id)
---                          ON DELETE CASCADE,
---)

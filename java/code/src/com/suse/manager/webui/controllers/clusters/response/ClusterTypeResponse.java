@@ -18,7 +18,9 @@ package com.suse.manager.webui.controllers.clusters.response;
 public class ClusterTypeResponse {
 
     private long id;
+    private String label;
     private String name;
+    private String description;
 
     /**
      * @return id to get
@@ -35,6 +37,20 @@ public class ClusterTypeResponse {
     }
 
     /**
+     * @return label to get
+     */
+    public String getLabel() {
+        return label;
+    }
+
+    /**
+     * @param labelIn to set
+     */
+    public void setLabel(String labelIn) {
+        this.label = labelIn;
+    }
+
+    /**
      * @return name to get
      */
     public String getName() {
@@ -48,4 +64,17 @@ public class ClusterTypeResponse {
         this.name = nameIn;
     }
 
+    /**
+     * @return description to get
+     */
+    public String getDescription() {
+        return description;
+    }
+
+    /**
+     * @param descriptionIn to set
+     */
+    public void setDescription(String descriptionIn) {
+        this.description = descriptionIn;
+    }
 }

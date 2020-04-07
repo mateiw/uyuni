@@ -16,13 +16,18 @@
 package com.suse.manager.webui.controllers.clusters;
 
 import com.google.gson.Gson;
+import com.redhat.rhn.domain.formula.FormulaFactory;
+import com.redhat.rhn.domain.server.Server;
+import com.redhat.rhn.domain.server.ServerFactory;
 import com.redhat.rhn.domain.user.User;
+import com.redhat.rhn.manager.entitlement.EntitlementManager;
 import com.suse.manager.clusters.ClusterManager;
 import com.suse.manager.clusters.ClusterNode;
 import com.suse.manager.model.clusters.Cluster;
 import com.suse.manager.webui.controllers.clusters.mappers.ResponseMappers;
 import com.suse.manager.webui.controllers.clusters.response.ClusterResponse;
 import com.suse.manager.webui.controllers.clusters.response.ClusterTypeResponse;
+import com.suse.manager.webui.controllers.clusters.response.ServerResponse;
 import com.suse.manager.webui.controllers.contentmanagement.handlers.ControllerApiUtils;
 import com.suse.manager.webui.utils.FlashScopeHelper;
 import com.suse.manager.webui.utils.gson.ResultJson;
@@ -33,6 +38,7 @@ import spark.Request;
 import spark.Response;
 import spark.template.jade.JadeTemplateEngine;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -61,7 +67,22 @@ public class ClustersController {
                 withCsrfToken(withUserPreferences(withRolesTemplate(ClustersController::showCluster))), jade);
         get("/manager/api/cluster/:id/nodes",
                 withUser(ClustersController::listNodes));
+        get("/manager/api/cluster/import/:type/formula",
+                withUser(ClustersController::formulaDataForImport));
+        get("/manager/api/cluster/provider/:provider/nodes",
+                withUser(ClustersController::providerNodes));
+    }
 
+    private static String providerNodes(Request request, Response response, User user) {
+        String providerType = request.params("provider");
+        // TODO entitlement for provider
+        List<Server> providerNodes = ServerFactory.findByEntitlement(EntitlementManager.SALT); // TODO change to clustering provider entitlement
+        List<ServerResponse> data = providerNodes.stream()
+                .filter(srv -> srv.asMinionServer().isPresent())
+                .map(srv -> srv.asMinionServer().get())
+                .map(ResponseMappers::toServerResponse)
+                .collect(Collectors.toList());
+        return json(response, ResultJson.success(data));
     }
 
     private static ModelAndView showImport(Request request, Response response, User user) {
@@ -99,6 +120,16 @@ public class ClustersController {
         data.put("flashMessage", FlashScopeHelper.flash(request));
         data.put("contentCluster", GSON.toJson(ResponseMappers.toClusterResponse(cluster)));
         return new ModelAndView(data, "controllers/clusters/templates/cluster.jade");
+    }
+
+    public static String formulaDataForImport(Request request, Response response, User user) {
+        String providerType = request.params("type");
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("layout",
+                FormulaFactory.getFormulaLayoutByName(providerType).orElseGet(Collections::emptyMap));
+
+        return json(response, ResultJson.success(data));
     }
 
     private static Long getId(Request request) {

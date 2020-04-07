@@ -13,7 +13,7 @@ export const renderer = (id, {contentImport, flashMessage} = {}) => {
 
   SpaRenderer.renderNavigationReact(
     <RolesProvider>
-      <ImportCluster availableTypes={availableTypesJson} flashMessage={flashMessage}/>
+      <ImportCluster availableProviders={availableTypesJson} flashMessage={flashMessage}/>
     </RolesProvider>,
     document.getElementById(id)
   );
