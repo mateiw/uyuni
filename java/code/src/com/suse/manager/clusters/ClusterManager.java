@@ -46,8 +46,10 @@ public class ClusterManager {
         getSession().save(type);
     }
 
-    public List<Cluster> findAllClusters() {
-        return getSession().createNamedQuery("Clusters.findAll").list();
+    public List<Cluster> findAllClusters(long orgId) {
+        return getSession().createNamedQuery("Clusters.findByOrg")
+                .setParameter("orgId", orgId)
+                .list();
     }
 
     public List<ClusterType> findAllClusterTypes() {

@@ -78,7 +78,7 @@ public class ClusterTest extends BaseTestCaseWithUser {
         manager.save(type);
         manager.save(cluster);
 
-        List<Cluster> clusters = manager.findAllClusters();
+        List<Cluster> clusters = manager.findAllClusters(user.getOrg().getId());
         assertEquals(1, clusters.size());
     }
 

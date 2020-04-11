@@ -15,6 +15,7 @@
 
 package com.suse.manager.model.clusters;
 
+import com.redhat.rhn.domain.org.Org;
 import com.redhat.rhn.domain.server.MinionServer;
 
 import javax.persistence.Column;
@@ -34,11 +35,12 @@ import javax.persistence.Table;
 @Table(name = "suseClusters")
 @NamedQueries
         ({
-                @NamedQuery(name = "Clusters.findAll", query = "from com.suse.manager.model.clusters.Cluster")
+                @NamedQuery(name = "Clusters.findByOrg", query = "from com.suse.manager.model.clusters.Cluster c where c.org.id = :orgId")
         })
 public class Cluster {
 
     private long id;
+    private Org org;
     private String name;
     private ClusterType type;
     private MinionServer managementNode;
@@ -61,6 +63,22 @@ public class Cluster {
      */
     public void setId(long idIn) {
         this.id = idIn;
+    }
+
+    /**
+     * @return org to get
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "org_id")
+    public Org getOrg() {
+        return org;
+    }
+
+    /**
+     * @param orgIn to set
+     */
+    public void setOrg(Org orgIn) {
+        this.org = orgIn;
     }
 
     /**

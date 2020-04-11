@@ -1,78 +1,110 @@
 // @flow
 import React, {useEffect, useState} from 'react';
-import useClustersApi from '../shared/api/use-clusters-api';
+import useClustersApi, {withErrorMessages} from '../shared/api/use-clusters-api';
 import {Panel} from 'components/panels/Panel';
 import {Button} from 'components/buttons';
 import {Messages} from 'components/messages';
+import {SectionToolbar} from 'components/section-toolbar/section-toolbar';
 import {FormulaFormContext, FormulaFormContextProvider, FormulaFormRenderer} from 'components/formulas/FormulaComponentGenerator';
 
+import type {FormulaValuesType} from '../shared/api/use-clusters-api';
+import type {Message} from 'components/messages';
+import type {ErrorMessagesType} from  '../shared/api/use-clusters-api';
+
 // TODO move this to FormulaComponentGenerator once its flow-ified
-type ValidatedFormulaType = {
-  errors: {
-    required: Array<string>,
-    invalid: Array<string>
-  },
-  values: {[string]: any}
-}
+// type ValidatedFormulaType = {
+//   errors: {
+//     required: Array<string>,
+//     invalid: Array<string>
+//   },
+//   values: {[string]: any}
+// }
 
 type Props = {
   provider: string,
-  onNext: ({[string]: any}) => void
+  values: ?FormulaValuesType,
+  onNext: (FormulaValuesType) => void,
+  onPrev: () => void,
+  setMessages: (Array<Message>) => void
 };
 
 const ProviderFormula = (props: Props) => {
     const {fetchFormulaData} = useClustersApi();
     const [layout, setLayout] = useState<any>(null);
-    const [messages, setMessages] = useState<Array<string>>([]);
+    // const [messages, setMessages] = useState<Array<string>>([]);
 
     useEffect(() => {
       fetchFormulaData(props.provider).then(data => {
-        console.log(data.layout);
         setLayout(data.layout);
-      });
+      })
+      .catch((error : ErrorMessagesType) => {
+        props.setMessages(error.messages);
+      });      
     }, [])
 
     const clickNext = ({errors, values}) => {
       if (errors) {
         const messages = [];
         if (errors.required && errors.required.length > 0) {
-            messages.push(t("Please input required fields: {0}", errors.required.join(', ')));
+            messages.push(Messages.error(t("Please input required fields: {0}", errors.required.join(', '))));
         }
         if (errors.invalid && errors.invalid.length > 0) {
-            messages.push(t("Invalid format of fields: {0}", errors.invalid.join(', ')));
+            messages.push(Messages.error(t("Invalid format of fields: {0}", errors.invalid.join(', '))));
         }
-        setMessages(messages);
+        props.setMessages(messages);
       } else {
         props.onNext(values);
       }
     }
 
-    let messageItems = messages.map((msg) => {
-        return { severity: "error", text: msg };
-    });
+    // let messageItems = messages.map((msg) => {
+    //     return { severity: "error", text: msg };
+    // });
 
     return (layout ? 
               <FormulaFormContextProvider layout={layout}
-                systemData={{}}
+                systemData={props.values ? props.values : {}}
                 groupData={{}}
                 scope="system">
-                  <Messages items={messageItems} />
+                  {/* <Messages items={messageItems} /> */}
                   <Panel
-                    headingLevel="h2"
-                    header={t("Configure import")}
+                    headingLevel="h4"
+                    title={t("Configure import")}
                     footer={
-                        <div className="btn-group">
                           <FormulaFormContext.Consumer>
-                            {({validate, clearValues}) => 
+                            {({validate}) => 
                                 <div className="btn-group">
-                                    <Button id="btn-next" disabled={false} icon="fa-arrow-right" text={t("Next")} className={"btn-default"} handler={() => {clickNext(validate())}} />
-                                    <Button id="reset-btn" icon="fa-eraser" text="Clear values" className="btn btn-default" handler={() => clearValues(() => window.confirm("Are you sure you want to clear all values?"))} />    
+                                  <Button
+                                      id="btn-prev"
+                                      text={t("Prev")}
+                                      className="btn-default"
+                                      icon="fa-arrow-left"
+                                      handler={() => props.onPrev()}
+                                  />                      
+                                  <Button id="btn-next"
+                                    disabled={false}
+                                    icon="fa-arrow-right"
+                                    text={t("Next")}
+                                    className={"btn-success"}
+                                    handler={() => {clickNext(validate())}} />
                                 </div>
                             }
                           </FormulaFormContext.Consumer>
-                        </div>
                     }>
-                      <div>
+                      <SectionToolbar>
+                        <div className='action-button-wrapper'>
+                          <div className='btn-group'>
+                            <FormulaFormContext.Consumer>
+                              {({clearValues}) => 
+                                <Button id="reset-btn" icon="fa-eraser" text="Clear values"
+                                  className="btn btn-default"
+                                  handler={() => clearValues(() => window.confirm("Are you sure you want to clear all values?"))} />
+                              }
+                            </FormulaFormContext.Consumer>
+                          </div>
+                        </div>    
+                      </SectionToolbar>
+                      <div style={{marginTop: "15px"}}>
                         <FormulaFormRenderer />
                       </div>
                   </Panel>
@@ -81,4 +113,4 @@ const ProviderFormula = (props: Props) => {
             );
 }
 
-export default ProviderFormula;
+export default withErrorMessages(ProviderFormula);

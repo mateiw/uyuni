@@ -1,8 +1,14 @@
 // @flow
+import * as React from 'react';
 import {useState} from 'react';
 import * as Network from 'utils/network';
+import {Messages} from 'components/messages';
 
 import type {JsonResult} from "utils/network";
+import type {Message} from 'components/messages';
+
+// TODO move this to FormulaComponentGenerator when flowified
+export type FormulaValuesType = {[string]: any};
 
 export type ClusterTypeType = {
     id: number,
@@ -27,27 +33,54 @@ export type ClusterNodeType = {
     hostname: string
 }
 
-// type ClustersListResultType = {
-//     clusters: Array<ClusterType>,
+// type ClusterNodesResultType = {
+//     nodes: Array<ClusterNodeType>,
 //     messages: {[string]: string}
 // }
 
-type ClusterNodesResultType = {
-    nodes: Array<ClusterNodeType>,
-    messages: {[string]: string}
+export type ErrorMessagesType = {
+    messages: Array<Message>
+}
+
+export class ErrorMessages extends Error {
+
+    messages = [];
+
+    constructor(messages: Array<Message>) {
+        super(messages.map((msg) => msg.text).join(" "));
+        this.messages = messages;
+    }
+}
+
+type Props = {}
+type State = {
+    messages: Array<Message>
+}
+
+export const withErrorMessages = (PageComponent: React.AbstractComponent<any>) => {
+
+    return class extends React.Component<Props, State> {
+        constructor(props: Props) {
+            super(props);
+            this.state = {
+                messages: []
+            }
+        }
+
+        render() {
+            return <React.Fragment>
+                    <Messages items={this.state.messages}/>
+                    <PageComponent setMessages={(messages) => this.setState({messages: messages})} {...this.props}/>
+                </React.Fragment>
+        }
+    };
 }
 
 const useClustersApi = ()  => {
-    const [clusterId, setClusterId] = useState<number>(0);
-
-    const [nodes, setNodes] = useState<Array<ClusterNodeType>>([]);
-    const [messages, setMessages] = useState<Array<Object>>([]);
     const [fetching, setFetching] = useState<boolean>(false);
 
-    const handleResponseError = (jqXHR: Object, arg: string = ""): any => {
-      const msg = Network.responseErrorMessage(jqXHR);
-      setMessages(msg);
-      return [];
+    const handleResponseError = (jqXHR: Object, arg: string = "") => {
+        throw new ErrorMessages(Network.responseErrorMessage(jqXHR));
     };
 
     // const fetchClustersList = () : Promise<Array<ClusterType>> => {
@@ -67,9 +100,6 @@ const useClustersApi = ()  => {
         setFetching(true);
         return Network.get(`/rhn/manager/api/cluster/${id}/nodes`).promise
             .then((data: JsonResult<Array<ClusterNodeType>>) => {
-                setClusterId(id);
-                setNodes(data.data);
-                // setMessages(data.data.messages);
                 return data.data;
             })
             .catch(handleResponseError)
@@ -107,15 +137,33 @@ const useClustersApi = ()  => {
             });            
     }
 
+    const startImport = (providerLabel: string, managementNodeId: number, providerConfig: FormulaValuesType, earliest: Date, actionChain: ?string) : Promise<number> => {
+        setFetching(true);
+        return Network.post(
+            "/rhn/manager/api/cluster/import",
+            JSON.stringify({
+                earliest: earliest,
+                provider: providerLabel,
+                managementNodeId: managementNodeId,
+                providerConfig: providerConfig
+            }),
+            "application/json"
+        ).promise
+        .then((data: JsonResult<number>) => {
+            return data.data
+        })
+        .catch(handleResponseError)
+        .finally(() => {
+            setFetching(false);
+        });     
+    }
 
     return {
-        // fetchClustersList,
-        nodes,
-        messages,
         fetchClusterNodes,
         fetchFormulaData,
         fetchManagementNodes,
-        fetching
+        fetching,
+        startImport
     }
 }
 

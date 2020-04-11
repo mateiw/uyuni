@@ -6,24 +6,25 @@ import {Button} from 'components/buttons';
 import type {ClusterTypeType} from '../shared/api/use-clusters-api';
 
 type Props = {
+  selectedProvider: ?string,
   availableProviders: Array<ClusterTypeType>,
   onNext: (string) => void
 };
 
 const SelectProvider = (props: Props) => {
-    const [selectedProvider, setSelectedProvider] = useState<?string>(null);
+    const [selectedProvider, setSelectedProvider] = useState<?string>(props.selectedProvider);
     
     return (
             <Panel
-                headingLevel="h2"
-                header={t("Available cluster providers")}
+                headingLevel="h4"
+                title={t("Available cluster providers")}
                 footer={
                     <div className="btn-group">
                         <Button
                             id="btn-next"
                             disabled={!selectedProvider}
                             text={t("Next")}
-                            className="btn-default"
+                            className="btn-success"
                             icon="fa-arrow-right"
                             handler={() => {if (selectedProvider) { props.onNext(selectedProvider)}}}
                         />

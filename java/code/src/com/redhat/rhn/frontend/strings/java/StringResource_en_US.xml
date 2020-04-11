@@ -8579,6 +8579,12 @@ Alternatively, you will want to download &lt;strong&gt;Incremental Channel Conte
       <trans-unit id="clusters.nav.title">
         <source>Clusters</source>
       </trans-unit>
+      <trans-unit id="clusters.nav.overview">
+        <source>Overview</source>
+      </trans-unit>
+      <trans-unit id="clusters.nav.import">
+        <source>Import</source>
+      </trans-unit>
       <trans-unit id="cveaudit.nav.title">
         <source>CVE Audit</source>
       </trans-unit>

@@ -35,6 +35,10 @@ CREATE UNIQUE INDEX IF NOT EXISTS suse_clustertypes_idx
 CREATE TABLE IF NOT EXISTS suseClusters (
     id          NUMERIC NOT NULL
                     CONSTRAINT suse_clusters_id_pk PRIMARY KEY,
+    org_id      NUMERIC NOT NULL
+                    CONSTRAINT rhn_server_oid_fk
+                    REFERENCES web_customer (id)
+                    ON DELETE CASCADE,
     name        VARCHAR(256) NOT NULL,
     type_id     NUMERIC NOT NULL
                     CONSTRAINT suse_clusters_type_fk

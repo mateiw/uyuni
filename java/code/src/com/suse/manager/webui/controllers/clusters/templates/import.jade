@@ -1,13 +1,14 @@
 include /templates/common.jade
 
 +userRoles
-
++userLocalization
 +userPreferences
 
 #import
 
 script(type='text/javascript').
     window.csrfToken = "#{csrf_token}";
+    window.actionChains = !{actionChains};
 
 div#init_data_import(style="display: none")
     | #{contentImport}

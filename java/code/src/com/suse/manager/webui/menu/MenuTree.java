@@ -171,7 +171,8 @@ public class MenuTree {
 
             // Clusters
             nodes.add(new MenuItem("clusters.nav.title").withIcon("spacewalk-icon-salt")
-                    .addChild(new MenuItem("Overview").withPrimaryUrl("/rhn/manager/clusters")));
+                    .addChild(new MenuItem("clusters.nav.overview").withPrimaryUrl("/rhn/manager/clusters"))
+                    .addChild(new MenuItem("clusters.nav.import").withPrimaryUrl("/rhn/manager/clusters/import")));
 
             // Salt
             nodes.add(new MenuItem("Salt").withIcon("spacewalk-icon-salt")

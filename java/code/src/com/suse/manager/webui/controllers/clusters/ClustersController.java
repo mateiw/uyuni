@@ -16,6 +16,8 @@
 package com.suse.manager.webui.controllers.clusters;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonParseException;
+import com.google.gson.reflect.TypeToken;
 import com.redhat.rhn.domain.formula.FormulaFactory;
 import com.redhat.rhn.domain.server.Server;
 import com.redhat.rhn.domain.server.ServerFactory;
@@ -24,6 +26,8 @@ import com.redhat.rhn.manager.entitlement.EntitlementManager;
 import com.suse.manager.clusters.ClusterManager;
 import com.suse.manager.clusters.ClusterNode;
 import com.suse.manager.model.clusters.Cluster;
+import com.suse.manager.webui.controllers.MinionController;
+import com.suse.manager.webui.controllers.MinionsAPI;
 import com.suse.manager.webui.controllers.clusters.mappers.ResponseMappers;
 import com.suse.manager.webui.controllers.clusters.response.ClusterResponse;
 import com.suse.manager.webui.controllers.clusters.response.ClusterTypeResponse;
@@ -46,13 +50,17 @@ import java.util.stream.Collectors;
 
 import static com.suse.manager.webui.utils.SparkApplicationHelper.json;
 import static com.suse.manager.webui.utils.SparkApplicationHelper.withCsrfToken;
+import static com.suse.manager.webui.utils.SparkApplicationHelper.withOrgAdmin;
 import static com.suse.manager.webui.utils.SparkApplicationHelper.withRolesTemplate;
 import static com.suse.manager.webui.utils.SparkApplicationHelper.withUser;
 import static com.suse.manager.webui.utils.SparkApplicationHelper.withUserPreferences;
 import static spark.Spark.get;
 import static spark.Spark.halt;
+import static spark.Spark.post;
 
 public class ClustersController {
+
+    private static final Logger LOG = Logger.getLogger(ClustersController.class);
 
     private static Logger log = Logger.getLogger(ClustersController.class);
     private static final Gson GSON = ControllerApiUtils.GSON;
@@ -71,6 +79,22 @@ public class ClustersController {
                 withUser(ClustersController::formulaDataForImport));
         get("/manager/api/cluster/provider/:provider/nodes",
                 withUser(ClustersController::providerNodes));
+        post("/manager/api/cluster/import",
+                withOrgAdmin(ClustersController::importCluster));
+    }
+
+    private static String importCluster(Request request, Response response, User user) {
+        Map<String, Boolean> jsonRequest;
+        try {
+            jsonRequest = GSON.fromJson(request.body(), new TypeToken<Map<String, Object>>() {
+            }.getType());
+        }
+        catch (JsonParseException e) {
+            LOG.error("Error parsing JSON body", e);
+            return json(response, HttpStatus.SC_BAD_REQUEST,
+                    ResultJson.error("request_error"));
+        }
+        return json(response, ResultJson.success("123")); // TODO return action id
     }
 
     private static String providerNodes(Request request, Response response, User user) {
@@ -92,6 +116,7 @@ public class ClustersController {
                         .collect(Collectors.toList());
         data.put("flashMessage", FlashScopeHelper.flash(request));
         data.put("contentImport", GSON.toJson(types));
+        MinionController.addActionChains(user, data);
         return new ModelAndView(data, "controllers/clusters/templates/import.jade");
     }
 
@@ -105,7 +130,7 @@ public class ClustersController {
     public static ModelAndView showList(Request request, Response response, User user) {
         Map<String, Object> data = new HashMap<>();
         List<ClusterResponse> clusters =
-                clusterManager.findAllClusters().stream().map(ResponseMappers::toClusterResponse)
+                clusterManager.findAllClusters(user.getOrg().getId()).stream().map(ResponseMappers::toClusterResponse)
                         .collect(Collectors.toList());
         data.put("flashMessage", FlashScopeHelper.flash(request));
         data.put("contentClusters", GSON.toJson(clusters));
