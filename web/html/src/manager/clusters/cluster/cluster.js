@@ -1,7 +1,7 @@
 // @flow
 import { hot } from 'react-hot-loader';
 import withPageWrapper from 'components/general/with-page-wrapper';
-import React, {useEffect} from 'react';
+import React, {useEffect, useState} from 'react';
 import {TopPanel} from 'components/panels/TopPanel';
 import {Panel} from 'components/panels/Panel';
 import {PanelRow} from 'components/panels/PanelRow';
@@ -11,22 +11,32 @@ import {Table} from 'components/table/Table';
 import {Column} from 'components/table/Column';
 import Functions from 'utils/functions';
 import {SearchField} from 'components/table/SearchField';
-import {AsyncButton} from 'components/buttons';
+import {AsyncButton, LinkButton} from 'components/buttons';
+import useClustersApi, {withErrorMessages} from '../shared/api/use-clusters-api';
 
-import useClustersApi from '../shared/api/use-clusters-api';
-import type {ClusterType} from '../shared/api/use-clusters-api';
+import type {Message} from 'components/messages';
+import type {ClusterType, ClusterNodeType, ErrorMessagesType} from '../shared/api/use-clusters-api';
 
 type Props = {
   cluster: ClusterType,
   flashMessage: String,
+  setMessages: (Array<Message>) => void
 };
 
 const Cluster = (props: Props) => {
-
-    const {nodes, fetchClusterNodes, fetching} = useClustersApi();
+    const [nodes, setNodes] = useState<Array<ClusterNodeType>>([]);
+    const [fetching, setFetching] = useState<boolean>(false);
+    const {fetchClusterNodes} = useClustersApi();
 
     useEffect(() => {
-      fetchClusterNodes(props.cluster.id);
+      setFetching(true);
+      fetchClusterNodes(props.cluster.id)
+      .then((nodes) => setNodes(nodes))
+      .catch((error : ErrorMessagesType) => {
+        props.setMessages(error.messages);
+      })
+      .finally((fetching) => setFetching(false))
+      ;
     }, []);
 
     const filterFunc = (row, criteria) => {
@@ -39,11 +49,18 @@ const Cluster = (props: Props) => {
 
     const panelButtons = (
         <div className="pull-right btn-group">
-            <AsyncButton id="enable-monitoring-btn" defaultType="btn-success"
+            <LinkButton
+              icon="fa-plus"
+              text={t("Join Node")}
+              className="gap-right btn-default"
+              href={`/rhn/manager/cluster/${props.cluster.id}/join`}
+              />
+            <AsyncButton id="enable-monitoring-btn" defaultType="btn-default"
               icon="fa-refresh"
               text={ t("Refresh") }
               className="gap-right"
               action={() => fetchClusterNodes(props.cluster.id)}/>
+
         </div>
     );
 
@@ -91,4 +108,4 @@ const Cluster = (props: Props) => {
       </React.Fragment>);
 }
 
-export default hot(module)(withPageWrapper<Props>(Cluster));
+export default hot(module)(withPageWrapper<Props>(withErrorMessages(Cluster)));

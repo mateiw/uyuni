@@ -19,6 +19,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
 import com.google.gson.reflect.TypeToken;
 import com.redhat.rhn.domain.formula.FormulaFactory;
+import com.redhat.rhn.domain.server.MinionServer;
 import com.redhat.rhn.domain.server.Server;
 import com.redhat.rhn.domain.server.ServerFactory;
 import com.redhat.rhn.domain.user.User;
@@ -27,7 +28,6 @@ import com.suse.manager.clusters.ClusterManager;
 import com.suse.manager.clusters.ClusterNode;
 import com.suse.manager.model.clusters.Cluster;
 import com.suse.manager.webui.controllers.MinionController;
-import com.suse.manager.webui.controllers.MinionsAPI;
 import com.suse.manager.webui.controllers.clusters.mappers.ResponseMappers;
 import com.suse.manager.webui.controllers.clusters.response.ClusterResponse;
 import com.suse.manager.webui.controllers.clusters.response.ClusterTypeResponse;
@@ -46,6 +46,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static com.suse.manager.webui.utils.SparkApplicationHelper.json;
@@ -73,28 +74,64 @@ public class ClustersController {
                 withCsrfToken(withUserPreferences(withRolesTemplate(ClustersController::showImport))), jade);
         get("/manager/cluster/:id",
                 withCsrfToken(withUserPreferences(withRolesTemplate(ClustersController::showCluster))), jade);
+        get("/manager/cluster/:id/join",
+                withCsrfToken(withUserPreferences(withRolesTemplate(ClustersController::showJoinCluster))), jade);
         get("/manager/api/cluster/:id/nodes",
                 withUser(ClustersController::listNodes));
-        get("/manager/api/cluster/import/:type/formula",
-                withUser(ClustersController::formulaDataForImport));
+        get("/manager/api/cluster/:id/nodes-to-join",
+                withUser(ClustersController::listNodesToJoin));
+        get("/manager/api/cluster/provider/:provider/formula/:type",
+                withUser(ClustersController::providerFormulaData));
         get("/manager/api/cluster/provider/:provider/nodes",
                 withUser(ClustersController::providerNodes));
         post("/manager/api/cluster/import",
                 withOrgAdmin(ClustersController::importCluster));
+        post("/manager/api/cluster/:id/join",
+                withOrgAdmin(ClustersController::joinCluster));
+    }
+
+    private static ModelAndView showJoinCluster(Request request, Response response, User user) {
+        Long id = getId(request);
+
+        Cluster cluster = clusterManager.getCluster(id);
+        Map<String, Object> data = new HashMap<>();
+        data.put("flashMessage", FlashScopeHelper.flash(request));
+        data.put("contentCluster", GSON.toJson(ResponseMappers.toClusterResponse(cluster)));
+        MinionController.addActionChains(user, data);
+        return new ModelAndView(data, "controllers/clusters/templates/join.jade");
     }
 
     private static String importCluster(Request request, Response response, User user) {
-        Map<String, Boolean> jsonRequest;
-        try {
-            jsonRequest = GSON.fromJson(request.body(), new TypeToken<Map<String, Object>>() {
-            }.getType());
-        }
-        catch (JsonParseException e) {
-            LOG.error("Error parsing JSON body", e);
+        Optional<Map<String, Object>> json = parseJson(request, response);
+        if (json.isEmpty()) {
             return json(response, HttpStatus.SC_BAD_REQUEST,
                     ResultJson.error("request_error"));
         }
+        // TODO schedule action
         return json(response, ResultJson.success("123")); // TODO return action id
+    }
+
+    private static Object joinCluster(Request request, Response response, User user) {
+        Long id = getId(request);
+        Optional<Map<String, Object>> json = parseJson(request, response);
+        if (json.isEmpty()) {
+            return json(response, HttpStatus.SC_BAD_REQUEST,
+                    ResultJson.error("request_error"));
+        }
+        // TODO schedule action
+        return json(response, ResultJson.success("123")); // TODO return action id
+    }
+
+    private static Optional<Map<String, Object>> parseJson(Request request, Response response) {
+        Map<String, Object> jsonRequest;
+        try {
+            jsonRequest = GSON.fromJson(request.body(), new TypeToken<Map<String, Object>>() {
+            }.getType());
+        } catch (JsonParseException e) {
+            LOG.error("Error parsing JSON body", e);
+            return Optional.empty();
+        }
+        return Optional.of(jsonRequest);
     }
 
     private static String providerNodes(Request request, Response response, User user) {
@@ -127,6 +164,16 @@ public class ClustersController {
         return json(response, ResultJson.success(data));
     }
 
+    private static Object listNodesToJoin(Request request, Response response, User user) {
+        Long id = getId(request);
+
+        List<MinionServer> servers = ClusterManager.instance().getNodesAvailableForJoining(id);
+        List<ServerResponse> data = servers.stream()
+                .map(minion -> ResponseMappers.toServerResponse(minion))
+                .collect(Collectors.toList());
+        return json(response, ResultJson.success(data));
+    }
+
     public static ModelAndView showList(Request request, Response response, User user) {
         Map<String, Object> data = new HashMap<>();
         List<ClusterResponse> clusters =
@@ -147,12 +194,23 @@ public class ClustersController {
         return new ModelAndView(data, "controllers/clusters/templates/cluster.jade");
     }
 
-    public static String formulaDataForImport(Request request, Response response, User user) {
-        String providerType = request.params("type");
+    public static String providerFormulaData(Request request, Response response, User user) {
+        String providerType = request.params("provider");
+        String formulaType = request.params("type");
+
+        // TODO assert parameters not empty and valid
+        // TODO sanitize type
+
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
 
         Map<String, Object> data = new HashMap<>();
         data.put("layout",
-                FormulaFactory.getFormulaLayoutByName(providerType).orElseGet(Collections::emptyMap));
+                FormulaFactory.getClusterProviderFormulaLayout(providerType, formulaType)
+                        .orElseGet(Collections::emptyMap));
 
         return json(response, ResultJson.success(data));
     }

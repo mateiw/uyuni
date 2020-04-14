@@ -28,7 +28,7 @@ const ListClusters = (props) => {
             hasEditingPermissions &&
             <LinkButton
                 id="importCluster"
-                icon="fa-plus"
+                icon="fa-download"
                 className="btn-link js-spa"
                 title={t('Import an existing cluster')}
                 text={t('Import cluster')}

@@ -1,15 +1,15 @@
 // @flow
 import React, {useEffect, useState} from 'react';
-import useClustersApi, {withErrorMessages} from '../shared/api/use-clusters-api';
+import useClustersApi, {withErrorMessages} from '../api/use-clusters-api';
 import {Panel} from 'components/panels/Panel';
 import {Button} from 'components/buttons';
 import {Messages} from 'components/messages';
 import {SectionToolbar} from 'components/section-toolbar/section-toolbar';
 import {FormulaFormContext, FormulaFormContextProvider, FormulaFormRenderer} from 'components/formulas/FormulaComponentGenerator';
 
-import type {FormulaValuesType} from '../shared/api/use-clusters-api';
+import type {FormulaValuesType} from '../api/use-clusters-api';
 import type {Message} from 'components/messages';
-import type {ErrorMessagesType} from  '../shared/api/use-clusters-api';
+import type {ErrorMessagesType} from  '../api/use-clusters-api';
 
 // TODO move this to FormulaComponentGenerator once its flow-ified
 // type ValidatedFormulaType = {
@@ -22,24 +22,28 @@ import type {ErrorMessagesType} from  '../shared/api/use-clusters-api';
 
 type Props = {
   provider: string,
+  title: string,
   values: ?FormulaValuesType,
+  formula: string,
   onNext: (FormulaValuesType) => void,
   onPrev: () => void,
   setMessages: (Array<Message>) => void
 };
 
-const ProviderFormula = (props: Props) => {
-    const {fetchFormulaData} = useClustersApi();
+const FormulaConfig = (props: Props) => {
     const [layout, setLayout] = useState<any>(null);
-    // const [messages, setMessages] = useState<Array<string>>([]);
+    const [fetching, setFetching] = useState<boolean>(false);
+    const {fetchProviderFormula} = useClustersApi();
 
     useEffect(() => {
-      fetchFormulaData(props.provider).then(data => {
+      setFetching(true);
+      fetchProviderFormula(props.provider, props.formula).then(data => {
         setLayout(data.layout);
       })
       .catch((error : ErrorMessagesType) => {
         props.setMessages(error.messages);
-      });      
+      })
+      .finally(() => setFetching(false));
     }, [])
 
     const clickNext = ({errors, values}) => {
@@ -57,19 +61,14 @@ const ProviderFormula = (props: Props) => {
       }
     }
 
-    // let messageItems = messages.map((msg) => {
-    //     return { severity: "error", text: msg };
-    // });
-
     return (layout ? 
               <FormulaFormContextProvider layout={layout}
                 systemData={props.values ? props.values : {}}
                 groupData={{}}
                 scope="system">
-                  {/* <Messages items={messageItems} /> */}
                   <Panel
                     headingLevel="h4"
-                    title={t("Configure import")}
+                    title={props.title}
                     footer={
                           <FormulaFormContext.Consumer>
                             {({validate}) => 
@@ -82,7 +81,6 @@ const ProviderFormula = (props: Props) => {
                                       handler={() => props.onPrev()}
                                   />                      
                                   <Button id="btn-next"
-                                    disabled={false}
                                     icon="fa-arrow-right"
                                     text={t("Next")}
                                     className={"btn-success"}
@@ -109,8 +107,34 @@ const ProviderFormula = (props: Props) => {
                       </div>
                   </Panel>
                 </FormulaFormContextProvider>
-                  : <div>{t("Loading...")}</div>
+                :
+                  <Panel
+                    headingLevel="h4"
+                    title={props.title}
+                    footer={
+                      <div className="btn-group">
+                        <Button
+                            id="btn-prev"
+                            text={t("Prev")}
+                            className="btn-default"
+                            icon="fa-arrow-left"
+                            disabled={true}
+                            handler={() => {}}
+                        />                      
+                        <Button id="btn-next"
+                          icon="fa-arrow-right"
+                          text={t("Next")}
+                          className={"btn-success"}
+                          disabled={true}
+                          handler={() => {}} />
+                      </div>
+                    }>
+                      <div className="panel-body text-center">
+                        <i className='fa fa-spinner fa-spin fa-1-5x'></i>
+                        <h4>{t("Loading...")}</h4>
+                      </div>
+                  </Panel>
             );
 }
 
-export default withErrorMessages(ProviderFormula);
+export default withErrorMessages(FormulaConfig);

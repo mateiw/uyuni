@@ -86,6 +86,8 @@ public class FormulaFactory {
     private static final String METADATA_FILE = "metadata.yml";
     private static final String PILLAR_EXAMPLE_FILE = "pillar.example";
     private static final String PILLAR_FILE_EXTENSION = "json";
+    private static final String METADATA_DIR_CLUSTER_PROVIDERS = "/usr/share/susemanager/cluster-providers/metadata/";
+
     private static final Gson GSON = new GsonBuilder()
             .registerTypeAdapter(Date.class, new ECMAScriptDateAdapter())
             .registerTypeAdapter(Double.class,  new JsonSerializer<Double>() {
@@ -433,6 +435,24 @@ public class FormulaFactory {
             }
             else if (layoutFileCustom.exists()) {
                 return Optional.of((Map<String, Object>) YAML.load(new FileInputStream(layoutFileCustom)));
+            }
+            else {
+                return Optional.empty();
+            }
+        }
+        catch (FileNotFoundException | YAMLException e) {
+            LOG.error("Error loading layout for formula '" + name + "'", e);
+            return Optional.empty();
+        }
+    }
+
+    public static Optional<Map<String, Object>> getClusterProviderFormulaLayout(String provider, String name) {
+        String layoutFilePath = provider + File.separator + name + ".yml";
+        File layoutFile = new File(METADATA_DIR_CLUSTER_PROVIDERS + layoutFilePath);
+
+        try {
+            if (layoutFile.exists()) {
+                return Optional.of((Map<String, Object>) YAML.load(new FileInputStream(layoutFile)));
             }
             else {
                 return Optional.empty();

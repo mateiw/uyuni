@@ -7,32 +7,36 @@ import {Column} from 'components/table/Column';
 import {SearchField} from 'components/table/SearchField';
 import {SystemLink} from 'components/links';
 import Functions from 'utils/functions';
-import useClustersApi, {withErrorMessages} from '../shared/api/use-clusters-api';
+import useClustersApi, {withErrorMessages} from '../api/use-clusters-api';
 
 import type {Message} from 'components/messages';
-import type {ErrorMessagesType} from  '../shared/api/use-clusters-api';
-import type {ServerType} from '../shared/api/use-clusters-api';
+import type {ErrorMessagesType, ServerType} from  '../api/use-clusters-api';
 
 type Props = {
-    provider: string,
-    selectedNode: ?ServerType,
+    title: string,
+    selectedServer: ?ServerType,
     onNext: (ServerType) => void,
-    onPrev: () => void,
-    setMessages: (Array<Message>) => void
+    onPrev?: () => void,
+    setMessages: (Array<Message>) => void,
+    fetchServers: () => Promise<Array<ServerType>>
 };
 
-const SelectManagementNode = (props: Props) => {
-    const [selectedNodeId, setSelectedNodeId] = useState<?string>(props.selectedNode ? props.selectedNode.id.toString() : null);
-    const [nodes, setNodes] = useState<Array<ServerType>>([]);
-    const {fetchManagementNodes, fetching} = useClustersApi();
+const SelectServer = (props: Props) => {
+    const [selectedServerId, setSelectedServerId] = useState<?string>(props.selectedServer ? props.selectedServer.id.toString() : null);
+    const [servers, setServers] = useState<Array<ServerType>>([]);
+    const [fetching, setFetching] = useState<boolean>(false);
 
     useEffect(() => {
-      fetchManagementNodes(props.provider).then(data => {
-        setNodes(data);
-      })
-      .catch((error : ErrorMessagesType) => {
-        props.setMessages(error.messages);
-      });
+        setFetching(true);
+        props.fetchServers().then(data => {
+            setServers(data);
+        })
+        .catch((error : ErrorMessagesType) => {
+            props.setMessages(error.messages);
+        })
+        .finally(() => {
+            setFetching(false);
+        });
     }, [])
 
     const filterFunc = (row, criteria) => {
@@ -43,11 +47,11 @@ const SelectManagementNode = (props: Props) => {
         return true;
     };
 
-    const selectNode = (nodeId: ?string) => {
-        if (nodeId) {
-            const node = nodes.find(node => node.id.toString() === selectedNodeId);
-            if (node) {
-                props.onNext(node);
+    const selectServer = (serverId: ?string) => {
+        if (serverId) {
+            const server = servers.find(srv => srv.id.toString() === selectedServerId);
+            if (server) {
+                props.onNext(server);
                 return true;
             }
         }
@@ -56,28 +60,27 @@ const SelectManagementNode = (props: Props) => {
 
     return (<Panel
                 headingLevel="h4"
-                title={t("Available management nodes")}
+                title={props.title}
                 footer={
                     <div className="btn-group">
-                        <Button
+                        {props.onPrev ? <Button
                             id="btn-prev"
                             text={t("Prev")}
                             className="btn-default"
                             icon="fa-arrow-left"
-                            handler={() => props.onPrev()}
-                        />                      
+                            handler={() => props.onPrev()} /> : null}
                         <Button
                             id="btn-next"
-                            disabled={!selectedNodeId}
+                            disabled={!selectedServerId}
                             text={t("Next")}
                             className="btn-success"
                             icon="fa-arrow-right"
-                            handler={() => selectNode(selectedNodeId)}
+                            handler={() => selectServer(selectedServerId)}
                         />
                     </div>
                 }>
                 <Table
-                    data={nodes}
+                    data={servers}
                     loading={fetching}
                     identifier={row => row.id}
                     initialSortColumnKey="name"
@@ -92,8 +95,8 @@ const SelectManagementNode = (props: Props) => {
                         header={''}
                         cell={row =>
                             <input type="radio" value={row.id} 
-                                checked={selectedNodeId == row.id} 
-                                onChange={(ev: SyntheticInputEvent<HTMLInputElement>) => setSelectedNodeId(ev.target.value)} />
+                                checked={selectedServerId == row.id} 
+                                onChange={(ev: SyntheticInputEvent<HTMLInputElement>) => setSelectedServerId(ev.target.value)} />
 
                         }
                     />                    
@@ -111,4 +114,4 @@ const SelectManagementNode = (props: Props) => {
             );
 }
 
-export default withErrorMessages(SelectManagementNode);
+export default withErrorMessages(SelectServer);

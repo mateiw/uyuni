@@ -78,6 +78,7 @@ export const withErrorMessages = (PageComponent: React.AbstractComponent<any>) =
 
 const useClustersApi = ()  => {
     const [fetching, setFetching] = useState<boolean>(false);
+    // const [fetchListeners] = useState<Array<(boolean) => void>>([]);
 
     const handleResponseError = (jqXHR: Object, arg: string = "") => {
         throw new ErrorMessages(Network.responseErrorMessage(jqXHR));
@@ -96,9 +97,9 @@ const useClustersApi = ()  => {
     //         });
     // }
 
-    const fetchClusterNodes = (id: number) : Promise<Array<ClusterNodeType>> => {
+    const fetchClusterNodes = (clusterId: number) : Promise<Array<ClusterNodeType>> => {
         setFetching(true);
-        return Network.get(`/rhn/manager/api/cluster/${id}/nodes`).promise
+        return Network.get(`/rhn/manager/api/cluster/${clusterId}/nodes`).promise
             .then((data: JsonResult<Array<ClusterNodeType>>) => {
                 return data.data;
             })
@@ -118,11 +119,23 @@ const useClustersApi = ()  => {
             .finally(() => {
                 setFetching(false);
             });
-    }    
+    }
 
-    const fetchFormulaData = (provider: string) : Promise<any> => {
+    const fetchNodesToJoin = (clusterId: number) : Promise<Array<ServerType>> => {
         setFetching(true);
-        return Network.get(`/rhn/manager/api/cluster/import/${provider}/formula`).promise
+        return Network.get(`/rhn/manager/api/cluster/${clusterId}/nodes-to-join`).promise
+            .then((data: JsonResult<Array<ServerType>>) => {
+                return data.data;
+            })
+            .catch(handleResponseError)
+            .finally(() => {
+                setFetching(false);
+            });
+    }
+
+    const fetchProviderFormula = (provider: string, type: string) : Promise<any> => {
+        setFetching(true);
+        return Network.get(`/rhn/manager/api/cluster/provider/${provider}/formula/${type}`).promise
             .then((data: JsonResult<any>) => {
                 return Promise.resolve({
                     "formula_name": provider,
@@ -158,12 +171,34 @@ const useClustersApi = ()  => {
         });     
     }
 
+    const scheduleJoinNode = (clusterId: number, serverId: number, providerConfig: FormulaValuesType, joinConfig: FormulaValuesType, earliest: Date, actionChain: ?string): Promise<number> => {
+        setFetching(true);
+        return Network.post(
+            `/rhn/manager/api/cluster/${clusterId}/join`,
+            JSON.stringify({
+                earliest: earliest,
+                serverId: serverId,
+                providerConfig: providerConfig,
+                joinConfig: joinConfig
+            }),
+            "application/json"
+        ).promise
+        .then((data: JsonResult<number>) => {
+            return data.data
+        })
+        .catch(handleResponseError)
+        .finally(() => {
+            setFetching(false);
+        });          
+    }
+
     return {
         fetchClusterNodes,
-        fetchFormulaData,
+        fetchProviderFormula,
         fetchManagementNodes,
-        fetching,
-        startImport
+        fetchNodesToJoin,
+        startImport,
+        scheduleJoinNode
     }
 }
 

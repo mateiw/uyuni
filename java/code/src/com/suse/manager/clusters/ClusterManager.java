@@ -15,6 +15,9 @@
 
 package com.suse.manager.clusters;
 
+import com.redhat.rhn.domain.server.MinionServer;
+import com.redhat.rhn.domain.server.Server;
+import com.redhat.rhn.domain.server.ServerFactory;
 import com.suse.manager.model.clusters.Cluster;
 import com.suse.manager.model.clusters.ClusterType;
 
@@ -68,5 +71,10 @@ public class ClusterManager {
             e.printStackTrace();
         }
         return Arrays.asList(new ClusterNode("node1"), new ClusterNode("node2"));
+    }
+
+    public List<MinionServer> getNodesAvailableForJoining(long clusterId) {
+        // TODO
+        return getSession().createQuery("from MinionServer").list();
     }
 }
