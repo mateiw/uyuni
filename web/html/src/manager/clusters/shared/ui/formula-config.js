@@ -6,6 +6,7 @@ import {Button} from 'components/buttons';
 import {Messages} from 'components/messages';
 import {SectionToolbar} from 'components/section-toolbar/section-toolbar';
 import {FormulaFormContext, FormulaFormContextProvider, FormulaFormRenderer} from 'components/formulas/FormulaComponentGenerator';
+import {Loading} from 'components/utils/Loading';
 
 import type {FormulaValuesType} from '../api/use-clusters-api';
 import type {Message} from 'components/messages';
@@ -129,10 +130,7 @@ const FormulaConfig = (props: Props) => {
                           handler={() => {}} />
                       </div>
                     }>
-                      <div className="panel-body text-center">
-                        <i className='fa fa-spinner fa-spin fa-1-5x'></i>
-                        <h4>{t("Loading...")}</h4>
-                      </div>
+                    <Loading/>
                   </Panel>
             );
 }

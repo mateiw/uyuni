@@ -4,12 +4,15 @@ import {useState, useEffect} from 'react';
 
 type HashContextType = {
     hash: ?string,
+    renderOnlyMatching: boolean,
+    matching?: boolean,
     goTo: (string) => void,
     back: () => void
 }
 
 export const HashRouterContext = React.createContext<HashContextType>({
         hash: null,
+        renderOnlyMatching: true,
         goTo: (hash) => {},
         back: () => {}
     });
@@ -21,21 +24,23 @@ function hashUrl(): ?string {
     return match ? match[1] : undefined;
 }
 
-// let listenerAdded = false;
-
 type HashRouterProps = {
     initialPath: string,
-    children: React.Node
+    children: React.Node,
+    renderOnlyMatching?: boolean
 }
 
-const HashRouter = (props: HashRouterProps) => {
-    const [hash, setHash] = useState(props.initialPath);
+const HashRouter = ({initialPath, children, renderOnlyMatching = true}: HashRouterProps) => {
+    const [hash, setHash] = useState(initialPath);
 
     useEffect(() => {
-        goTo(props.initialPath);
+        const hash = hashUrl();
+        if (hash) {
+            setHash(hash);
+        } else {
+            goTo(initialPath);
+        }
         window.addEventListener("popstate", (event) => {
-            console.log("popstate");
-            console.log(event);
             setHash(hashUrl())
         });
     }, []);
@@ -50,8 +55,9 @@ const HashRouter = (props: HashRouterProps) => {
     }
 
     return (
-        <HashRouterContext.Provider value={{hash: hash, goTo: goTo, back: back}}>
-            {props.children}
+        <HashRouterContext.Provider value={{hash: hash, goTo: goTo, back: back,
+            renderOnlyMatching: renderOnlyMatching}}>
+            {children}
         </HashRouterContext.Provider>
     );
 }
@@ -64,10 +70,16 @@ type RouterProps = {
 const Route = (props: RouterProps) => {
     return <HashRouterContext.Consumer>
         {context => {
-            if (props.path === context.hash) {
-                return props.children(context);
+            const matching = props.path === context.hash;
+            if (context.renderOnlyMatching) {
+                if (matching) {
+                    return props.children({matching: true, ...context});
+                } else {
+                    return null;
+                }
+            } else {
+                return props.children({matching: matching, ...context});
             }
-            return null;
         }}
     </HashRouterContext.Consumer>;
 }
