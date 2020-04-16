@@ -7,7 +7,7 @@ import SelectProvider from './select-provider';
 import FormulaConfig from '../shared/ui/formula-config';
 import SelectServer from '../shared/ui/select-server';
 import useClustersApi from '../shared/api/use-clusters-api';
-import {HashRouter, Route} from 'components/utils/HashRouter';
+import {HashRouter, Route, Switch} from 'components/utils/HashRouter';
 import ScheduleClusterAction from '../shared/ui/schedule-cluster-action';
 import {SystemLink} from 'components/links';
 
@@ -38,54 +38,56 @@ const ImportCluster = (props: Props) => {
                 icon="spacewalk-icon-cluster"
                 helpUrl="/docs/reference/clusters/clusters-menu.html">
                 <HashRouter initialPath="provider">
-                    <Route path="provider">
-                        {({goTo}) =>
-                            <SelectProvider selectedProvider={providerLabel}
-                                availableProviders={props.availableProviders}
-                                onNext={(providerLabel: string) => {setProviderLabel(providerLabel); goTo("management-node");}} />
-                                }
-                    </Route>
-                    <Route path="management-node">
-                        {({goTo, back}) => providerLabel ?
-                            <SelectServer title={t("Available management nodes")}
-                                selectedServer={managementNode}
-                                fetchServers={() => fetchManagementNodes(providerLabel)}
-                                onNext={(node) => {setManagementNode(node); goTo("provider-config");}}
-                                onPrev={back} />                               
-                            : null}
-                    </Route>
-                    <Route path="provider-config">
-                        {({goTo, back}) => providerLabel ?
-                            <FormulaConfig values={providerConfig}
-                                provider={providerLabel}
-                                title={t("Provider configuration")}
-                                formula="config"
-                                onNext={(formulaValues) => {setProviderConfig(formulaValues); goTo("schedule");}}
-                                onPrev={back} /> : null}
-                    </Route> 
-                    <Route path="schedule">
-                        {({goTo, back}) => {
-                            const selectedProvider = props.availableProviders.find(p => p.label === providerLabel);
-                            return selectedProvider && managementNode ?
-                                <ScheduleClusterAction
-                                    title={t("Schedule join node")}
-                                    panel={
-                                        <div className="form-horizontal">
-                                            <div className="form-group">
-                                                <label className="col-md-3 control-label">{t("Provider:")}</label>
-                                                <div className="col-md-9">{selectedProvider.name}</div>
-                                            </div>
-                                            <div className="form-group">
-                                                <label className="col-md-3 control-label">{t("Management Node:")}</label>
-                                                <div className="col-md-9"><SystemLink id={managementNode.id}>{managementNode.name}</SystemLink></div>
-                                            </div>
-                                        </div>
+                    <Switch>
+                        <Route path="provider">
+                            {({goTo}) =>
+                                <SelectProvider selectedProvider={providerLabel}
+                                    availableProviders={props.availableProviders}
+                                    onNext={(providerLabel: string) => {setProviderLabel(providerLabel); goTo("management-node");}} />
                                     }
-                                    schedule={onImport}
-                                    onPrev={back}
-                                    /> : null;
-                        }}
-                    </Route>
+                        </Route>
+                        <Route path="management-node">
+                            {({goTo, back}) => providerLabel ?
+                                <SelectServer title={t("Available management nodes")}
+                                    selectedServer={managementNode}
+                                    fetchServers={() => fetchManagementNodes(providerLabel)}
+                                    onNext={(node) => {setManagementNode(node); goTo("provider-config");}}
+                                    onPrev={back} />                               
+                                : null}
+                        </Route>
+                        <Route path="provider-config">
+                            {({goTo, back}) => providerLabel ?
+                                <FormulaConfig values={providerConfig}
+                                    provider={providerLabel}
+                                    title={t("Provider configuration")}
+                                    formula="config"
+                                    onNext={(formulaValues) => {setProviderConfig(formulaValues); goTo("schedule");}}
+                                    onPrev={back} /> : null}
+                        </Route> 
+                        <Route path="schedule">
+                            {({goTo, back}) => {
+                                const selectedProvider = props.availableProviders.find(p => p.label === providerLabel);
+                                return selectedProvider && managementNode ?
+                                    <ScheduleClusterAction
+                                        title={t("Schedule join node")}
+                                        panel={
+                                            <div className="form-horizontal">
+                                                <div className="form-group">
+                                                    <label className="col-md-3 control-label">{t("Provider:")}</label>
+                                                    <div className="col-md-9">{selectedProvider.name}</div>
+                                                </div>
+                                                <div className="form-group">
+                                                    <label className="col-md-3 control-label">{t("Management Node:")}</label>
+                                                    <div className="col-md-9"><SystemLink id={managementNode.id}>{managementNode.name}</SystemLink></div>
+                                                </div>
+                                            </div>
+                                        }
+                                        schedule={onImport}
+                                        onPrev={back}
+                                        /> : null;
+                            }}
+                        </Route>
+                    </Switch>
                 </HashRouter>
             </TopPanel>);
 

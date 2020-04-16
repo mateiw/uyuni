@@ -171,14 +171,13 @@ const useClustersApi = ()  => {
         });     
     }
 
-    const scheduleJoinNode = (clusterId: number, serverId: number, providerConfig: FormulaValuesType, joinConfig: FormulaValuesType, earliest: Date, actionChain: ?string): Promise<number> => {
+    const scheduleJoinNode = (clusterId: number, serverId: number, joinConfig: FormulaValuesType, earliest: Date, actionChain: ?string): Promise<number> => {
         setFetching(true);
         return Network.post(
             `/rhn/manager/api/cluster/${clusterId}/join`,
             JSON.stringify({
                 earliest: earliest,
                 serverId: serverId,
-                providerConfig: providerConfig,
                 joinConfig: joinConfig
             }),
             "application/json"
