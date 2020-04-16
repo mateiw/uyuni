@@ -4,8 +4,8 @@ import {useState, useEffect} from 'react';
 
 type HashContextType = {
     hash: ?string,
-    renderOnlyMatching: boolean,
-    matching?: boolean,
+    switch?: boolean,
+    match?: boolean,
     goTo: (string) => void,
     back: () => void
 }
@@ -26,11 +26,10 @@ function hashUrl(): ?string {
 
 type HashRouterProps = {
     initialPath: string,
-    children: React.Node,
-    renderOnlyMatching?: boolean
+    children: React.Node
 }
 
-const HashRouter = ({initialPath, children, renderOnlyMatching = true}: HashRouterProps) => {
+const HashRouter = ({initialPath, children}: HashRouterProps) => {
     const [hash, setHash] = useState(initialPath);
 
     useEffect(() => {
@@ -55,8 +54,7 @@ const HashRouter = ({initialPath, children, renderOnlyMatching = true}: HashRout
     }
 
     return (
-        <HashRouterContext.Provider value={{hash: hash, goTo: goTo, back: back,
-            renderOnlyMatching: renderOnlyMatching}}>
+        <HashRouterContext.Provider value={{hash: hash, goTo: goTo, back: back}}>
             {children}
         </HashRouterContext.Provider>
     );
@@ -64,24 +62,46 @@ const HashRouter = ({initialPath, children, renderOnlyMatching = true}: HashRout
 
 type RouterProps = {
     path: string,
-    children: (HashContextType) => React.Node
+    children:  React.Node | (HashContextType) => React.Node
 }
 
-const Route = (props: RouterProps) => {
+const Route = ({path, children}: RouterProps) => {
     return <HashRouterContext.Consumer>
         {context => {
-            const matching = props.path === context.hash;
-            if (context.renderOnlyMatching) {
-                if (matching) {
-                    return props.children({matching: true, ...context});
+            const match = path === context.hash;
+            if (context.switch) {
+                if (match) {
+                    if (typeof children === "function") {
+                        return children({match: true, ...context});
+                    } else {
+                        return children;
+                    }
                 } else {
                     return null;
                 }
             } else {
-                return props.children({matching: matching, ...context});
+                if (typeof children === "function") {
+                    return children({match: match, ...context});
+                } else {
+                    return children;
+                }
             }
         }}
     </HashRouterContext.Consumer>;
 }
 
-export {HashRouter, Route};
+type SwitchProps = {
+    children: React.Node
+}
+
+const Switch = ({children}: SwitchProps) => {
+    return <HashRouterContext.Consumer>
+        {context =>
+            <HashRouterContext.Provider value={{switch: true, ...context}}>
+                {children}
+            </HashRouterContext.Provider>
+        }
+        </HashRouterContext.Consumer>;
+}
+
+export {HashRouter, Route, Switch};
